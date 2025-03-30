@@ -17,6 +17,12 @@ struct MenuSettingTab: View {
 
     @AppStorage(Key.showSubMenuForAction)
     private var showSubMenuForAction = false
+    
+    @AppStorage(Key.showIconForApplication)
+    private var showIconForApplication = false
+
+    @AppStorage(Key.showIconForAction)
+    private var showIconForAction = false
 
     var body: some View {
         Form {
@@ -32,6 +38,9 @@ struct MenuSettingTab: View {
         Section {
             Toggle(isOn: $showSubMenuForApplication) {
                 Text("Show as submenu")
+            }
+            Toggle(isOn: $showIconForApplication) {
+                Text("Show icon")
             }
             List {
                 ForEach($store.appItems) { $item in
@@ -84,6 +93,9 @@ struct MenuSettingTab: View {
         Section {
             Toggle(isOn: $showSubMenuForAction) {
                 Text("Show as submenu")
+            }
+            Toggle(isOn: $showIconForAction) {
+                Text("Show icon")
             }
             ForEach($store.actionItems) { $item in
                 HStack {

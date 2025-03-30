@@ -154,11 +154,16 @@ class MenuItemStore {
 }
 
 extension UserDefaults {
+    
+    static var teamIDPrefix: String {
+        (Bundle.main.infoDictionary?["TEAM_ID_PREFIX"] as? String) ?? "VB7MJ8R223"
+    }
+    
     static let group: UserDefaults = {
         #if DEBUG
-        UserDefaults(suiteName: "VB7MJ8R223.top.kyleye.MenuHelperDebug")!
+        UserDefaults(suiteName: "\(teamIDPrefix)top.kyleye.MenuHelperDebug")!
         #else
-        UserDefaults(suiteName: "VB7MJ8R223.top.kyleye.MenuHelper")!
+        UserDefaults(suiteName: "\(teamIDPrefix)top.kyleye.MenuHelper")!
         #endif
     }()
 }

@@ -88,7 +88,7 @@ class FinderSync: FIFinderSync {
             menuItem.action = #selector(menuAction(_:))
             menuItem.toolTip = "\(item.name)"
             menuItem.tag = 0
-            if menuKind == .toolbarItemMenu {
+            if menuKind == .toolbarItemMenu || UserDefaults.group.showIconForApplication {
                 menuItem.image = item.icon
             }
             applicationMenu.addItem(menuItem)
@@ -110,7 +110,7 @@ class FinderSync: FIFinderSync {
             menuItem.action = #selector(menuAction(_:))
             menuItem.toolTip = "\(item.name)"
             menuItem.tag = 1
-            if menuKind == .toolbarItemMenu {
+            if menuKind == .toolbarItemMenu || UserDefaults.group.showIconForAction {
                 menuItem.image = item.icon
             }
             actionMenu.addItem(menuItem)

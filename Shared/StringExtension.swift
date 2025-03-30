@@ -25,7 +25,9 @@ enum Key {
     static let newFileExtension = "NEW_FILE_EXTENSION"
 
     static let showSubMenuForApplication = "SHOW_SUB_MENU_FOR_APPLICATION"
+    static let showIconForApplication = "SHOW_ICON_FOR_APPLICATION"
     static let showSubMenuForAction = "SHOW_SUB_MENU_FOR_ACTION"
+    static let showIconForAction = "SHOW_ICON_FOR_ACTION"
 }
 
 enum CopyOption: Int, CustomStringConvertible, CaseIterable, Identifiable {

@@ -29,6 +29,7 @@ class FinderCommChannel {
     }
 
     @MainActor @objc func choosePermissionFolder(_ notification: Notification) {
+        print(#function)
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.allowedContentTypes = [.folder]

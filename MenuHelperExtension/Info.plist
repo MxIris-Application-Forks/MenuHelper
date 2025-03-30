@@ -11,5 +11,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FinderSync</string>
 	</dict>
+	<key>TEAM_ID_PREFIX</key>
+	<string>$(TeamIdentifierPrefix)</string>
 </dict>
 </plist>

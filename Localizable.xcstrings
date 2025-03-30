@@ -585,6 +585,16 @@
         }
       }
     },
+    "Show icon" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展示图标"
+          }
+        }
+      }
+    },
     "Suggest more action menus here" : {
       "localizations" : {
         "zh-Hans" : {

@@ -46,6 +46,14 @@ extension UserDefaults {
         return NewFileExtension(rawValue: fileExtensionRaw) ?? .none
     }
 
+    var showIconForApplication: Bool {
+        defaults(for: Key.showIconForApplication) ?? false
+    }
+
+    var showIconForAction: Bool {
+        defaults(for: Key.showIconForAction) ?? false
+    }
+    
     var showSubMenuForApplication: Bool {
         defaults(for: Key.showSubMenuForApplication) ?? false
     }

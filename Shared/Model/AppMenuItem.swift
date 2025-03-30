@@ -26,7 +26,7 @@ struct AppMenuItem: MenuItem {
     var appName: String {
         FileManager.default.displayName(atPath: url.path)
     }
-
+    
     var name: String {
         itemName.isEmpty ? appName : itemName
     }
