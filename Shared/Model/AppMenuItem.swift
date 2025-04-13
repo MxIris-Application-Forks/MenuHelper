@@ -12,7 +12,7 @@ import OrderedCollections
 struct AppMenuItem: MenuItem {
     init(appURL url: URL) {
         self.url = url
-        itemName = url.deletingPathExtension().lastPathComponent
+        self.itemName = url.deletingPathExtension().lastPathComponent
     }
 
     var url: URL
@@ -26,12 +26,21 @@ struct AppMenuItem: MenuItem {
     var appName: String {
         FileManager.default.displayName(atPath: url.path)
     }
-    
+
     var name: String {
         itemName.isEmpty ? appName : itemName
     }
 
-    var icon: NSImage { NSWorkspace.shared.icon(forFile: url.path) }
+    static var iconByURLCache: [URL: NSImage] = [:]
+
+    var icon: NSImage {
+        if let icon = Self.iconByURLCache[url] {
+            return icon
+        }
+        let icon = NSWorkspace.shared.icon(forFile: url.path)
+        Self.iconByURLCache[url] = icon
+        return icon
+    }
 }
 
 extension AppMenuItem {

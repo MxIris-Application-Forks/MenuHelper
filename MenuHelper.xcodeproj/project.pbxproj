@@ -767,6 +767,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "MenuHelper-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = MenuHelper;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright ©️ 2023 YEXULEI. All rights reserved";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -775,7 +776,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature BareSlashRegexLiterals -enable-upcoming-feature ConciseMagicFile -enable-upcoming-feature ExistentialAny -enable-upcoming-feature ForwardTrailingClosures -enable-upcoming-feature ImplicitOpenExistentials -enable-upcoming-feature StrictConcurrency -warn-concurrency -enable-actor-data-race-checks";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.kyleye.MenuHelperDebug;
+				PRODUCT_BUNDLE_IDENTIFIER = com.JH.MenuHelperDebug;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -803,6 +804,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "MenuHelper-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = MenuHelper;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright ©️ 2023 YEXULEI. All rights reserved";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -811,7 +813,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature BareSlashRegexLiterals -enable-upcoming-feature ConciseMagicFile -enable-upcoming-feature ExistentialAny -enable-upcoming-feature ForwardTrailingClosures -enable-upcoming-feature ImplicitOpenExistentials -enable-upcoming-feature StrictConcurrency -warn-concurrency -enable-actor-data-race-checks";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.kyleye.MenuHelper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.JH.MenuHelper;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -843,7 +845,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature BareSlashRegexLiterals -enable-upcoming-feature ConciseMagicFile -enable-upcoming-feature ExistentialAny -enable-upcoming-feature ForwardTrailingClosures -enable-upcoming-feature ImplicitOpenExistentials -enable-upcoming-feature StrictConcurrency -warn-concurrency -enable-actor-data-race-checks";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.kyleye.MenuHelperDebug.MenuHelperExtensionDebug;
+				PRODUCT_BUNDLE_IDENTIFIER = com.JH.MenuHelperDebug.MenuHelperExtensionDebug;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -876,7 +878,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature BareSlashRegexLiterals -enable-upcoming-feature ConciseMagicFile -enable-upcoming-feature ExistentialAny -enable-upcoming-feature ForwardTrailingClosures -enable-upcoming-feature ImplicitOpenExistentials -enable-upcoming-feature StrictConcurrency -warn-concurrency -enable-actor-data-race-checks";
-				PRODUCT_BUNDLE_IDENTIFIER = dev.kyleye.MenuHelper.MenuHelperExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.JH.MenuHelper.MenuHelperExtension;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

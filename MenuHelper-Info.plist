@@ -11,8 +11,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>TEAM_ID_PREFIX</key>
 	<string>$(TeamIdentifierPrefix)</string>
 </dict>

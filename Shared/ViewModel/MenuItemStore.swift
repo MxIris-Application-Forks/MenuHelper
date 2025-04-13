@@ -161,9 +161,9 @@ extension UserDefaults {
     
     static let group: UserDefaults = {
         #if DEBUG
-        UserDefaults(suiteName: "\(teamIDPrefix)top.kyleye.MenuHelperDebug")!
+        UserDefaults(suiteName: "\(teamIDPrefix)com.JH.MenuHelperDebug")!
         #else
-        UserDefaults(suiteName: "\(teamIDPrefix)top.kyleye.MenuHelper")!
+        UserDefaults(suiteName: "\(teamIDPrefix)com.JH.MenuHelper")!
         #endif
     }()
 }
