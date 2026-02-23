@@ -26,6 +26,13 @@ struct AppMenuItemView: View {
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
+            Button(role: .destructive) {
+                if let index = store.appItems.firstIndex(where: { $0.id == item.id }) {
+                    store.deleteAppItems(offsets: IndexSet(integer: index))
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
         .sheet(isPresented: $editingItem, onDismiss: nil) {
             AppMenuItemEditor(item: $item)
@@ -35,7 +42,7 @@ struct AppMenuItemView: View {
 }
 
 #Preview {
-    @State var store = MenuItemStore()
+    @Previewable @State var store = MenuItemStore()
     return AppMenuItemView(item: .constant(.xcode!))
         .environment(store)
         .padding()

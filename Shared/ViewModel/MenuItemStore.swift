@@ -131,7 +131,11 @@ class MenuItemStore {
 
     // MARK: - UserDefaults
 
+    private var isLoading = false
+
     private func load() throws {
+        isLoading = true
+        defer { isLoading = false }
         if let appItemsData = UserDefaults.group.data(forKey: "APP_ITEMS"),
            let actionItemsData = UserDefaults.group.data(forKey: "ACTION_ITEMS") {
             let decoder = PropertyListDecoder()
@@ -144,6 +148,7 @@ class MenuItemStore {
     }
 
     private func save() throws {
+        guard !isLoading else { return }
         let encoder = PropertyListEncoder()
         let appItemsData = try encoder.encode(OrderedSet(appItems))
         let actionItemsData = try encoder.encode(OrderedSet(actionItems))

@@ -45,6 +45,8 @@
 		279C378B2711CB0E00436979 /* MenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 279C37882711C9CD00436979 /* MenuItem.swift */; };
 		27AC028726896D31000CCE63 /* AppMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AC028626896D31000CCE63 /* AppMenuItem.swift */; };
 		27AC028826896D31000CCE63 /* AppMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AC028626896D31000CCE63 /* AppMenuItem.swift */; };
+		CA1C000300000000000A0003 /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C000100000000000A0001 /* AppIconCache.swift */; };
+		CA1C000400000000000A0004 /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C000100000000000A0001 /* AppIconCache.swift */; };
 		27ADFF902AF202ED00731FA8 /* AcknowKit in Frameworks */ = {isa = PBXBuildFile; productRef = 27ADFF8F2AF202ED00731FA8 /* AcknowKit */; };
 		27BB52A22B134562003EDCE2 /* MenuHelperExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2781C5902688A4540042B453 /* MenuHelperExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		27CC3F2F272038F2000A6005 /* SyncFolderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27CC3F2E272038F2000A6005 /* SyncFolderItem.swift */; };
@@ -133,6 +135,7 @@
 		279C37852711BE6400436979 /* MenuItemClickable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemClickable.swift; sourceTree = "<group>"; };
 		279C37882711C9CD00436979 /* MenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItem.swift; sourceTree = "<group>"; };
 		27AC028626896D31000CCE63 /* AppMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMenuItem.swift; sourceTree = "<group>"; };
+		CA1C000100000000000A0001 /* AppIconCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconCache.swift; sourceTree = "<group>"; };
 		27C5B8192688D24B00AFCF9D /* MenuHelper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuHelper.entitlements; sourceTree = "<group>"; };
 		27CC3F2E272038F2000A6005 /* SyncFolderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncFolderItem.swift; sourceTree = "<group>"; };
 		27CC3F3127203924000A6005 /* FolderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItem.swift; sourceTree = "<group>"; };
@@ -198,11 +201,20 @@
 			isa = PBXGroup;
 			children = (
 				27421A9B271FF10400A0BD28 /* StringExtension.swift */,
+				CA1C000200000000000A0002 /* Cache */,
 				27421A93271FCABF00A0BD28 /* Channel */,
 				27952047268B6A1200492ABF /* ViewModel */,
 				27952046268B6A0C00492ABF /* Model */,
 			);
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		CA1C000200000000000A0002 /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				CA1C000100000000000A0001 /* AppIconCache.swift */,
+			);
+			path = Cache;
 			sourceTree = "<group>";
 		};
 		27421A93271FCABF00A0BD28 /* Channel */ = {
@@ -539,6 +551,7 @@
 				2795203B268B5B7E00492ABF /* SettingView.swift in Sources */,
 				2781A6292688A0260042B453 /* MenuHelperApp.swift in Sources */,
 				27AC028726896D31000CCE63 /* AppMenuItem.swift in Sources */,
+				CA1C000300000000000A0003 /* AppIconCache.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,6 +565,7 @@
 				27CC3F30272038F2000A6005 /* SyncFolderItem.swift in Sources */,
 				27F15EDA271299E80042944A /* BookmarkFolderItem.swift in Sources */,
 				27AC028826896D31000CCE63 /* AppMenuItem.swift in Sources */,
+				CA1C000400000000000A0004 /* AppIconCache.swift in Sources */,
 				27CC3F3327203924000A6005 /* FolderItem.swift in Sources */,
 				279C37872711BE6400436979 /* MenuItemClickable.swift in Sources */,
 				27F15ED62712986B0042944A /* FolderItemStore.swift in Sources */,

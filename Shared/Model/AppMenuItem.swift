@@ -31,15 +31,8 @@ struct AppMenuItem: MenuItem {
         itemName.isEmpty ? appName : itemName
     }
 
-    static var iconByURLCache: [URL: NSImage] = [:]
-
     var icon: NSImage {
-        if let icon = Self.iconByURLCache[url] {
-            return icon
-        }
-        let icon = NSWorkspace.shared.icon(forFile: url.path)
-        Self.iconByURLCache[url] = icon
-        return icon
+        AppIconCache.shared.icon(for: url)
     }
 }
 

@@ -18,16 +18,22 @@ private let logger = Logger(subsystem: subsystem, category: "menu")
 class FinderSync: FIFinderSync {
     override init() {
         super.init()
-        channel.setup()
-        logger.notice("FinderSync() launched from \(Bundle.main.bundlePath, privacy: .public)")
-        FIFinderSyncController.default().directoryURLs = Set(folderStore.syncItems.map { URL(fileURLWithPath: $0.path) })
-        logger.notice("Init sync directory is \(folderStore.syncItems.map(\.path).joined(separator: "\n"), privacy: .public)")
+        Task { @MainActor in
+            channel.setup()
+            logger.notice("FinderSync() launched from \(Bundle.main.bundlePath, privacy: .public)")
+            FIFinderSyncController.default().directoryURLs = Set(folderStore.syncItems.map { URL(fileURLWithPath: $0.path) })
+            logger.notice("Init sync directory is \(folderStore.syncItems.map(\.path).joined(separator: "\n"), privacy: .public)")
 
-        // Monitor volumes
-        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { notification in
-            if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
-                Task {
-                    await MainActor.run {
+            // Prewarm icon cache
+            let urls = menuStore.appItems.map(\.url)
+            Task.detached(priority: .utility) {
+                AppIconCache.shared.prewarm(urls: urls)
+            }
+
+            // Monitor volumes
+            NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { notification in
+                if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
+                    Task { @MainActor in
                         folderStore.appendItem(SyncFolderItem(volumeURL))
                     }
                 }

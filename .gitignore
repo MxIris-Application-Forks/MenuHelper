@@ -2,3 +2,5 @@ MenuHelper.xcodeproj/project.xcworkspace
 MenuHelper.xcodeproj/project.xcworkspace
 MenuHelper.xcodeproj/xcuserdata
 .DS_Store
+.home
+.claude/settings.local.json
