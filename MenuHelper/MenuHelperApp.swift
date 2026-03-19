@@ -7,8 +7,19 @@
 
 import SwiftUI
 
+final class AppDelegate: NSResponder, NSApplicationDelegate {
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        return false
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return true
+    }
+}
+
 @main
 struct MenuHelperApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
@@ -22,7 +33,7 @@ struct MenuHelperApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
-        
+
         Window("Acknowledgements", id: "acknowledgements") {
             AcknowledgementsWindow()
         }
@@ -38,7 +49,7 @@ struct MenuHelperApp: App {
         }
         .defaultSize(width: 400, height: 300)
         .restorationBehavior(.disabled)
-        
+
         Window("Support", id: "support") {
             SupportWindow()
                 .frame(width: 600, height: 400)
@@ -57,7 +68,7 @@ struct MenuHelperApp: App {
                 }
             }
         }
-        
+
         Settings {
             SettingView()
         }
@@ -66,4 +77,3 @@ struct MenuHelperApp: App {
 }
 
 let channel = AppCommChannel()
-
