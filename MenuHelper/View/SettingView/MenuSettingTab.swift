@@ -57,6 +57,7 @@ struct MenuSettingTab: View {
                                let data = coding as? Data,
                                let urlString = String(data: data, encoding: .utf8),
                                let url = URL(string: urlString) {
+                                AppIconCache.shared.loadImmediately(for: url)
                                 let item = AppMenuItem(appURL: url)
                                 items.append(item)
                             }
@@ -77,7 +78,10 @@ struct MenuSettingTab: View {
                     panel.canChooseDirectories = false
                     panel.directoryURL = URL(fileURLWithPath: "/Applications/")
                     if panel.runModal() == .OK {
-                        let items = panel.urls.map { AppMenuItem(appURL: $0) }
+                        let items = panel.urls.map { url in
+                            AppIconCache.shared.loadImmediately(for: url)
+                            return AppMenuItem(appURL: url)
+                        }
                         store.appendItems(items)
                     }
                 } label: {

@@ -60,6 +60,14 @@ final class AppIconCache {
         return placeholder
     }
 
+    /// Synchronously load and cache icon (for interactive contexts like settings UI)
+    func loadImmediately(for url: URL) {
+        guard memoryCache[url] == nil else { return }
+        let image = NSWorkspace.shared.icon(forFile: url.path)
+        memoryCache[url] = image
+        saveToDisk(image: image, for: url, modificationDate: modificationDate(for: url))
+    }
+
     /// Prewarm icon cache for all given URLs
     func prewarm(urls: [URL]) {
         for url in urls {

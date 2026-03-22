@@ -16,6 +16,9 @@ let channel = FinderCommChannel()
 private let logger = Logger(subsystem: subsystem, category: "menu")
 
 class FinderSync: FIFinderSync {
+    private var cachedMenus: [UInt: NSMenu] = [:]
+    private var cachedStateHash: Int = 0
+
     override init() {
         super.init()
         Task { @MainActor in
@@ -24,11 +27,8 @@ class FinderSync: FIFinderSync {
             FIFinderSyncController.default().directoryURLs = Set(folderStore.syncItems.map { URL(fileURLWithPath: $0.path) })
             logger.notice("Init sync directory is \(folderStore.syncItems.map(\.path).joined(separator: "\n"), privacy: .public)")
 
-            // Prewarm icon cache
-            let urls = menuStore.appItems.map(\.url)
-            Task.detached(priority: .utility) {
-                AppIconCache.shared.prewarm(urls: urls)
-            }
+            // Prewarm icon cache (sync disk reads, only misses go async)
+            AppIconCache.shared.prewarm(urls: menuStore.appItems.map(\.url))
 
             // Monitor volumes
             NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { notification in
@@ -73,8 +73,38 @@ class FinderSync: FIFinderSync {
         @unknown default:
             break
         }
-        // Produce a menu for the extension.
+
+        // Invalidate cache when items or settings change
+        let stateHash = menuStateHash
+        if stateHash != cachedStateHash {
+            cachedMenus.removeAll()
+            cachedStateHash = stateHash
+        }
+
+        // Return cached menu if available
+        if let cached = cachedMenus[menuKind.rawValue] {
+            return cached
+        }
+
+        // Build and cache
         logger.notice("Create menu for \(menuKind.rawValue)")
+        let menu = buildMenu(for: menuKind)
+        cachedMenus[menuKind.rawValue] = menu
+        return menu
+    }
+
+    private var menuStateHash: Int {
+        var hasher = Hasher()
+        hasher.combine(menuStore.appItems)
+        hasher.combine(menuStore.actionItems)
+        hasher.combine(UserDefaults.group.showSubMenuForApplication)
+        hasher.combine(UserDefaults.group.showSubMenuForAction)
+        hasher.combine(UserDefaults.group.showIconForApplication)
+        hasher.combine(UserDefaults.group.showIconForAction)
+        return hasher.finalize()
+    }
+
+    private func buildMenu(for menuKind: FIMenuKind) -> NSMenu {
         let menu = NSMenu(title: "MenuHelper")
         menu.showsStateColumn = true
 
