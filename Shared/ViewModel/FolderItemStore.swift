@@ -12,27 +12,20 @@ import SwiftUI
 
 private let logger = Logger(subsystem: subsystem, category: "folder_item_store")
 
+@MainActor
 @Observable
-final class FolderItemStore: Sendable {
+final class FolderItemStore {
     private(set) var bookmarkItems: [BookmarkFolderItem] = []
     private(set) var syncItems: [SyncFolderItem] = []
 
     // MARK: - Init
 
-    nonisolated init() {
-        Task {
-            await MainActor.run {
-                try? load()
-            }
-        }
+    init() {
+        try? load()
     }
 
-    nonisolated func refresh() {
-        Task {
-            await MainActor.run {
-                try? load()
-            }
-        }
+    func refresh() {
+        try? load()
     }
 
     // MARK: - Append Item
@@ -91,18 +84,14 @@ final class FolderItemStore: Sendable {
         withAnimation {
             bookmarkItems.removeAll()
         }
-        Task.detached {
-            try await self.save()
-        }
+        try? save()
     }
 
     func deleteAllSyncItems() {
         withAnimation {
             syncItems.removeAll()
         }
-        Task.detached {
-            try await self.save()
-        }
+        try? save()
     }
 
     // MARK: - UserDefaults

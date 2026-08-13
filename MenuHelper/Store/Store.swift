@@ -15,11 +15,12 @@ enum StoreError: Error {
     case failedVerification
 }
 
+@MainActor
 @Observable
 final class Store {
     private(set) var coffies: [Product] = []
     private(set) var purchased = false
-    var updateListenerTask: Task<Void, any Error>?
+    var updateListenerTask: Task<Void, Never>?
 
     private let storage = NSUbiquitousKeyValueStore.default
     private static let purchasedKey = "PURCHASED"
@@ -37,18 +38,19 @@ final class Store {
         }
     }
 
-    deinit {
+    isolated deinit {
         updateListenerTask?.cancel()
     }
 
-    func listenForTransactions() -> Task<Void, any Error> {
-        return Task.detached {
+    func listenForTransactions() -> Task<Void, Never> {
+        Task { [weak self] in
             // Iterate through any transactions which didn't come from a direct call to `purchase()`.
-            for await result in Transaction.updates {
+            for await verificationResult in Transaction.updates {
+                guard let self else { return }
                 do {
-                    let transaction = try self.checkVerified(result)
+                    let transaction = try self.checkVerified(verificationResult)
                     // Deliver content to the user.
-                    await self.updatePurchasedIdentifiers(transaction)
+                    self.updatePurchasedIdentifiers(transaction)
                     // Always finish a transaction.
                     await transaction.finish()
                 } catch {
@@ -59,7 +61,7 @@ final class Store {
         }
     }
 
-    @MainActor func requestProducts() async {
+    func requestProducts() async {
         do {
             let storeProducts = try await Product.products(for: productIdentifiers)
             coffies = storeProducts.filter { $0.type == .consumable }.sorted(by: \.price)
@@ -74,7 +76,7 @@ final class Store {
         case let .success(verification):
             let transaction = try checkVerified(verification)
             // Deliver content to the user.
-            await updatePurchasedIdentifiers(transaction)
+            updatePurchasedIdentifiers(transaction)
             // Always finish a transaction.
             await transaction.finish()
             return transaction
@@ -85,19 +87,21 @@ final class Store {
         }
     }
 
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    private func checkVerified<VerifiedValue>(
+        _ verificationResult: VerificationResult<VerifiedValue>
+    ) throws -> VerifiedValue {
         // Check if the transaction passes StoreKit verification.
-        switch result {
+        switch verificationResult {
         case .unverified:
             // StoreKit has parsed the JWS but failed verification. Don't deliver content to the user.
             throw StoreError.failedVerification
-        case let .verified(safe):
+        case let .verified(verifiedValue):
             // If the transaction is verified, unwrap and return it.
-            return safe
+            return verifiedValue
         }
     }
 
-    @MainActor func updatePurchasedIdentifiers(_ transaction: Transaction) async {
+    private func updatePurchasedIdentifiers(_ transaction: Transaction) {
         if transaction.revocationDate == nil {
             // If the App Store has not revoked the transaction, add it to the list of `purchasedIdentifiers`.
             storage.set(true, forKey: Store.purchasedKey)
@@ -109,13 +113,15 @@ final class Store {
         }
     }
 
-    @MainActor func refreshPurchased() async {
+    func refreshPurchased() {
         purchased = storage.bool(forKey: Store.purchasedKey)
     }
 }
 
 extension Sequence {
-    func sorted<T: Comparable>(by keyPath: KeyPath<Element, T>) -> [Element] {
+    func sorted<ComparableValue: Comparable>(
+        by keyPath: KeyPath<Element, ComparableValue>
+    ) -> [Element] {
         sorted { $0[keyPath: keyPath] < $1[keyPath: keyPath] }
     }
 }

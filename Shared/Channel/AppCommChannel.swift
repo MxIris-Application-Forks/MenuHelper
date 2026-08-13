@@ -8,14 +8,28 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: subsystem, category: "app_comm_channel")
+nonisolated private let logger = Logger(subsystem: subsystem, category: "app_comm_channel")
 
-actor AppCommChannel {
+@MainActor
+final class AppCommChannel {
     weak var folderItemStore: FolderItemStore?
+    private var notificationObservers: [any NSObjectProtocol] = []
+
     func setup(store: FolderItemStore) {
-        let center = DistributedNotificationCenter.default()
-        center.addObserver(self, selector: #selector(refreshFolderItems(_:)), name: .init(rawValue: "RefreshFolderItems"), object: bundleIdentifier)
         folderItemStore = store
+        guard notificationObservers.isEmpty else { return }
+
+        let center = DistributedNotificationCenter.default()
+        let observer = center.addObserver(
+            forName: .init(rawValue: "RefreshFolderItems"),
+            object: bundleIdentifier,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.refreshFolderItems()
+            }
+        }
+        notificationObservers.append(observer)
     }
 
     nonisolated func send(name: String, data: [AnyHashable: Any]? = nil) {
@@ -27,10 +41,8 @@ actor AppCommChannel {
                                   deliverImmediately: true)
     }
 
-    @MainActor @objc func refreshFolderItems(_ notification: Notification) {
+    private func refreshFolderItems() {
         logger.notice("Refresh folder items")
-        Task {
-            await folderItemStore?.refresh()
-        }
+        folderItemStore?.refresh()
     }
 }

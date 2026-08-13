@@ -18,9 +18,7 @@ struct FolderSettingTab: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            Task {
-                await channel.setup(store: store)
-            }
+            channel.setup(store: store)
         }
     }
 

@@ -9,9 +9,9 @@ import AppKit
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: subsystem, category: "folder_item")
+nonisolated private let logger = Logger(subsystem: subsystem, category: "folder_item")
 
-struct BookmarkFolderItem: FolderItem {
+nonisolated struct BookmarkFolderItem: FolderItem {
     var url: URL
     var bookmark: Data
 

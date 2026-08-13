@@ -8,9 +8,13 @@
 import AppKit
 import Foundation
 
-struct ActionMenuItem: MenuItem {
-    static func == (lhs: ActionMenuItem, rhs: ActionMenuItem) -> Bool {
-        lhs.name == rhs.name
+nonisolated struct ActionMenuItem: MenuItem {
+    private static let displayImage = NSImage(named: "icon")!
+    private static let contextualMenuImage = AppIconCache.menuThumbnail(from: displayImage)
+        ?? displayImage
+
+    static func == (leftItem: ActionMenuItem, rightItem: ActionMenuItem) -> Bool {
+        leftItem.name == rightItem.name
     }
 
     var key: String
@@ -18,11 +22,12 @@ struct ActionMenuItem: MenuItem {
     var enabled = true
     var actionIndex: Int
 
-    var icon: NSImage { NSImage(named: "icon")! }
+    var icon: NSImage { Self.displayImage }
+    var menuIcon: NSImage { Self.contextualMenuImage }
 }
 
 extension ActionMenuItem {
-    static var all: [ActionMenuItem] = [.copyPath, copyFileName, .goParent, .newFile]
+    static let all: [ActionMenuItem] = [.copyPath, copyFileName, .goParent, .newFile]
 
     static let copyPath = ActionMenuItem(key: "Copy Path", actionIndex: 0)
     static let copyFileName = ActionMenuItem(key: "Copy File Name", actionIndex: 1)

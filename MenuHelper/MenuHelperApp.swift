@@ -76,4 +76,4 @@ struct MenuHelperApp: App {
     }
 }
 
-let channel = AppCommChannel()
+@MainActor let channel = AppCommChannel()

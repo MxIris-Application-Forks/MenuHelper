@@ -7,12 +7,12 @@
 
 import AppKit
 
-protocol MenuItem: Hashable, Identifiable, Codable {
+nonisolated protocol MenuItem: Hashable, Identifiable, Codable, Sendable {
     var name: String { get }
     var enabled: Bool { get set }
     var icon: NSImage { get }
 }
 
 extension MenuItem {
-    var id: String { name }
+    nonisolated var id: String { name }
 }

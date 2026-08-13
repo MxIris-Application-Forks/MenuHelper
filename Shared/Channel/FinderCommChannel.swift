@@ -11,57 +11,96 @@ import os.log
 
 private let logger = Logger(subsystem: subsystem, category: "app_comm_channel")
 
-class FinderCommChannel {
+@MainActor
+final class FinderCommChannel {
+    private var notificationObservers: [any NSObjectProtocol] = []
+
     func setup() {
+        guard notificationObservers.isEmpty else { return }
+
         let center = DistributedNotificationCenter.default()
-        center.addObserver(self, selector: #selector(choosePermissionFolder(_:)), name: .init(rawValue: "ChoosePermissionFolder"), object: mainAppBundleID)
-        center.addObserver(self, selector: #selector(refreshMenuItems(_:)), name: .init(rawValue: "RefreshMenuItems"), object: mainAppBundleID)
-        center.addObserver(self, selector: #selector(refreshFolderItems(_:)), name: .init(rawValue: "RefreshFolderItems"), object: mainAppBundleID)
+        notificationObservers = [
+            center.addObserver(
+                forName: .init(rawValue: "ChoosePermissionFolder"),
+                object: mainApplicationBundleIdentifier,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.choosePermissionFolder()
+                }
+            },
+            center.addObserver(
+                forName: .init(rawValue: "RefreshMenuItems"),
+                object: mainApplicationBundleIdentifier,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.refreshMenuItems()
+                }
+            },
+            center.addObserver(
+                forName: .init(rawValue: "RefreshFolderItems"),
+                object: mainApplicationBundleIdentifier,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.refreshFolderItems()
+                }
+            },
+        ]
     }
 
     func send(name: String, data: [AnyHashable: Any]? = nil) {
         logger.notice("Sending \(name) data: \(data ?? [:])")
         DistributedNotificationCenter.default()
             .postNotificationName(.init(rawValue: name),
-                                  object: mainAppBundleID,
+                                  object: mainApplicationBundleIdentifier,
                                   userInfo: data,
                                   deliverImmediately: true)
     }
 
-    @MainActor @objc func choosePermissionFolder(_ notification: Notification) {
+    private func choosePermissionFolder() {
         print(#function)
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = true
-        panel.allowedContentTypes = [.folder]
-        panel.canChooseDirectories = true
-        if let pw = getpwuid(getuid()), let home = pw.pointee.pw_dir {
-            let path = FileManager.default.string(withFileSystemRepresentation: home, length: strlen(home))
-            panel.directoryURL = URL(fileURLWithPath: path)
+        let folderSelectionPanel = NSOpenPanel()
+        folderSelectionPanel.allowsMultipleSelection = true
+        folderSelectionPanel.allowedContentTypes = [.folder]
+        folderSelectionPanel.canChooseDirectories = true
+        if let passwordDatabaseEntry = getpwuid(getuid()),
+           let homeDirectoryPathPointer = passwordDatabaseEntry.pointee.pw_dir {
+            let homeDirectoryPath = FileManager.default.string(
+                withFileSystemRepresentation: homeDirectoryPathPointer,
+                length: strlen(homeDirectoryPathPointer)
+            )
+            folderSelectionPanel.directoryURL = URL(fileURLWithPath: homeDirectoryPath)
         } else {
-            panel.directoryURL = URL(fileURLWithPath: "/Users")
+            folderSelectionPanel.directoryURL = URL(fileURLWithPath: "/Users")
         }
-        if panel.runModal() == .OK {
-            folderStore.appendItems(panel.urls.map { BookmarkFolderItem($0) })
+        if folderSelectionPanel.runModal() == .OK {
+            folderStore.appendItems(folderSelectionPanel.urls.map { BookmarkFolderItem($0) })
             send(name: "AppRefreshFolderItems", data: nil)
         }
     }
 
-    @MainActor @objc func refreshMenuItems(_ notification: Notification) {
+    private func refreshMenuItems() {
         logger.notice("Refresh menu items")
         menuStore.refresh()
-        AppIconCache.shared.prewarm(urls: menuStore.appItems.map(\.url))
+        finderMenuSnapshot.replace(
+            applicationMenuItems: menuStore.appItems,
+            actionMenuItems: menuStore.actionItems
+        )
+        AppIconCache.shared.prewarm(applicationLocations: menuStore.appItems.map(\.url))
     }
-    
-    @objc func refreshFolderItems(_ notification: Notification) {
+
+    private func refreshFolderItems() {
         logger.notice("Refresh folder items")
         folderStore.refresh()
     }
 
-    private var mainAppBundleID: String {
-        guard var bundleID = Bundle.main.bundleIdentifier,
-              let index = bundleID.lastIndex(of: ".")
+    nonisolated private var mainApplicationBundleIdentifier: String {
+        guard var bundleIdentifier = Bundle.main.bundleIdentifier,
+              let extensionSeparatorIndex = bundleIdentifier.lastIndex(of: ".")
         else { return "" }
-        bundleID.removeSubrange(index ..< bundleID.endIndex)
-        return bundleID
+        bundleIdentifier.removeSubrange(extensionSeparatorIndex ..< bundleIdentifier.endIndex)
+        return bundleIdentifier
     }
 }

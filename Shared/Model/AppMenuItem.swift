@@ -9,7 +9,7 @@ import AppKit
 import Foundation
 import OrderedCollections
 
-struct AppMenuItem: MenuItem {
+nonisolated struct AppMenuItem: MenuItem {
     init(appURL url: URL) {
         self.url = url
         self.itemName = url.deletingPathExtension().lastPathComponent
@@ -32,7 +32,11 @@ struct AppMenuItem: MenuItem {
     }
 
     var icon: NSImage {
-        AppIconCache.shared.icon(for: url)
+        AppIconCache.shared.displayIcon(for: url)
+    }
+
+    var menuIcon: NSImage {
+        AppIconCache.shared.menuIcon(for: url)
     }
 }
 

@@ -8,8 +8,9 @@
 import OrderedCollections
 import SwiftUI
 
+@MainActor
 @Observable
-class MenuItemStore {
+final class MenuItemStore {
     var appItems: [AppMenuItem] = [] {
         didSet {
             try? save()
@@ -23,12 +24,8 @@ class MenuItemStore {
 
     // MARK: - Init
 
-    nonisolated init() {
-        Task {
-            await MainActor.run {
-                try? load()
-            }
-        }
+    init() {
+        try? load()
     }
 
     func refresh() {
@@ -159,16 +156,17 @@ class MenuItemStore {
 }
 
 extension UserDefaults {
-    
-    static var teamIDPrefix: String {
+
+    nonisolated static var teamIdentifierPrefix: String {
         (Bundle.main.infoDictionary?["TEAM_ID_PREFIX"] as? String) ?? "VB7MJ8R223"
     }
-    
-    static let group: UserDefaults = {
+
+    // UserDefaults is documented by Apple as safe to share across threads.
+    nonisolated(unsafe) static let group: UserDefaults = {
         #if DEBUG
-        UserDefaults(suiteName: "\(teamIDPrefix)com.JH.MenuHelperDebug")!
+        UserDefaults(suiteName: "\(teamIdentifierPrefix)com.JH.MenuHelperDebug")!
         #else
-        UserDefaults(suiteName: "\(teamIDPrefix)com.JH.MenuHelper")!
+        UserDefaults(suiteName: "\(teamIdentifierPrefix)com.JH.MenuHelper")!
         #endif
     }()
 }

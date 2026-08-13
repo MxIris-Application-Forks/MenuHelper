@@ -39,9 +39,7 @@ struct CoffieStoreView: View {
             }
         }
         .onAppear {
-            Task {
-                await store.refreshPurchased()
-            }
+            store.refreshPurchased()
         }
     }
 }

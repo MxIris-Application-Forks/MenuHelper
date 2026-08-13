@@ -7,8 +7,8 @@
 
 import Foundation
 
-let bundleIdentifier = Bundle.main.bundleIdentifier ?? ""
-var subsystem: String { bundleIdentifier }
+nonisolated let bundleIdentifier = Bundle.main.bundleIdentifier ?? ""
+nonisolated var subsystem: String { bundleIdentifier }
 
 enum Key {
     static let showContextualMenuForItem = "SHOW_CONTEXTUAL_MENU_FOR_ITEM"

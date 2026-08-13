@@ -11,57 +11,70 @@ import os.log
 
 private let logger = Logger(subsystem: subsystem, category: "menu_click")
 
-protocol MenuItemClickable {
-    func menuClick(with urls: [URL])
+protocol MenuItemClickable: Sendable {
+    func menuClick(with fileLocations: [URL])
 }
 
 extension AppMenuItem: MenuItemClickable {
-    func menuClick(with urls: [URL]) {
-        Task {
+    func menuClick(with fileLocations: [URL]) {
+        Task { @MainActor in
             do {
-                let config = NSWorkspace.OpenConfiguration()
-                config.promptsUserIfNeeded = true
-                config.arguments = arguments + UserDefaults.group.globalApplicationArguments
-                config.environment = environment.merging(UserDefaults.group.globalApplicationEnvironment, uniquingKeysWith: { old, _ in old })
-                let application = try await NSWorkspace.shared.open(urls, withApplicationAt: url, configuration: config)
-                if let path = application.bundleURL?.path,
-                   let identifier = application.bundleIdentifier,
-                   let date = application.launchDate {
-                    logger.notice("Success: open \(identifier, privacy: .public) app at \(path, privacy: .public) in \(date, privacy: .public)")
+                let openConfiguration = NSWorkspace.OpenConfiguration()
+                openConfiguration.promptsUserIfNeeded = true
+                openConfiguration.arguments = arguments + UserDefaults.group.globalApplicationArguments
+                openConfiguration.environment = environment.merging(
+                    UserDefaults.group.globalApplicationEnvironment,
+                    uniquingKeysWith: { existingValue, _ in existingValue }
+                )
+                let runningApplication = try await NSWorkspace.shared.open(
+                    fileLocations,
+                    withApplicationAt: url,
+                    configuration: openConfiguration
+                )
+                if let applicationPath = runningApplication.bundleURL?.path,
+                   let applicationIdentifier = runningApplication.bundleIdentifier,
+                   let launchDate = runningApplication.launchDate {
+                    logger.notice("Success: open \(applicationIdentifier, privacy: .public) app at \(applicationPath, privacy: .public) in \(launchDate, privacy: .public)")
                 }
-            } catch {
-                guard let error = error as? CocoaError,
-                      let underlyingError = error.userInfo["NSUnderlyingError"] as? NSError else { return }
-                logger.error("Error: \(error.localizedDescription)")
-                Task { @MainActor in
-                    if underlyingError.code == -10820 {
-                        let alert = NSAlert(error: error)
-                        alert.addButton(withTitle: String(localized: "OK", comment: "OK button"))
-                        alert.addButton(withTitle: String(localized: "Remove", comment: "Remove app button"))
-                        let response = alert.runModal()
-                        logger.notice("NSAlert response result \(response.rawValue)")
-                        switch response {
-                        case .alertFirstButtonReturn:
-                            logger.notice("Dismiss error with OK")
-                        case .alertSecondButtonReturn:
-                            logger.notice("Dismiss error with Remove app")
-                            if let index = menuStore.appItems.firstIndex(of: self) {
-                                menuStore.deleteAppItems(offsets: IndexSet(integer: index))
+            } catch let caughtError {
+                guard let cocoaError = caughtError as? CocoaError,
+                      let underlyingError = cocoaError.userInfo["NSUnderlyingError"] as? NSError else { return }
+                logger.error("Error: \(cocoaError.localizedDescription)")
+                if underlyingError.code == -10820 {
+                    let alert = NSAlert(error: cocoaError)
+                    alert.addButton(withTitle: String(localized: "OK", comment: "OK button"))
+                    alert.addButton(withTitle: String(localized: "Remove", comment: "Remove app button"))
+                    let alertResponse = alert.runModal()
+                    logger.notice("NSAlert response result \(alertResponse.rawValue)")
+                    switch alertResponse {
+                    case .alertFirstButtonReturn:
+                        logger.notice("Dismiss error with OK")
+                    case .alertSecondButtonReturn:
+                        logger.notice("Dismiss error with Remove app")
+                        if let itemIndex = menuStore.appItems.firstIndex(of: self) {
+                            menuStore.deleteAppItems(offsets: IndexSet(integer: itemIndex))
+                            finderMenuSnapshot.replace(
+                                applicationMenuItems: menuStore.appItems,
+                                actionMenuItems: menuStore.actionItems
+                            )
+                        }
+                    default:
+                        break
+                    }
+                } else if let firstFileLocation = fileLocations.first {
+                    let permissionPanel = NSOpenPanel()
+                    permissionPanel.allowsMultipleSelection = true
+                    permissionPanel.allowedContentTypes = [.folder]
+                    permissionPanel.canChooseDirectories = true
+                    permissionPanel.directoryURL = firstFileLocation
+                    let panelResponse = await permissionPanel.begin()
+                    logger.notice("NSOpenPanel response result \(panelResponse.rawValue)")
+                    if panelResponse == .OK {
+                        folderStore.appendItems(
+                            permissionPanel.urls.map { selectedFolderLocation in
+                                BookmarkFolderItem(selectedFolderLocation)
                             }
-                        default:
-                            break
-                        }
-                    } else {
-                        let panel = NSOpenPanel()
-                        panel.allowsMultipleSelection = true
-                        panel.allowedContentTypes = [.folder]
-                        panel.canChooseDirectories = true
-                        panel.directoryURL = URL(fileURLWithPath: urls[0].path)
-                        let response = await panel.begin()
-                        logger.notice("NSOpenPanel response result \(response.rawValue)")
-                        if response == .OK {
-                            folderStore.appendItems(panel.urls.map { BookmarkFolderItem($0) })
-                        }
+                        )
                     }
                 }
             }
@@ -70,106 +83,128 @@ extension AppMenuItem: MenuItemClickable {
 }
 
 extension ActionMenuItem: MenuItemClickable {
-    static let actions: [([URL]) -> ActionMenuResult] = [
-        { urls in
-            let board = NSPasteboard.general
-            board.clearContents()
-            let string = urls
-                .map(\.path)
-                .map {
-                    let option = UserDefaults.group.copyOption
-                    switch option {
-                    case .origin:
-                        return $0
-                    case .escape:
-                        return $0.replacingOccurrences(of: " ", with: #"\ "#)
-                    case .quoto:
-                        return "\"\($0)\""
-                    }
-                }
-                .joined(separator: UserDefaults.group.copySeparator)
-            let success = board.setString(string, forType: .string)
+    private enum ActionKind: Int {
+        case copyPath
+        case copyFileName
+        case goToParentDirectory
+        case createFile
+    }
 
-            return ActionMenuResult(success: success, message: "Pasteboard setString to \(string)")
-        },
-        { urls in
-            let board = NSPasteboard.general
-            board.clearContents()
-            let string = urls
-                .map(\.lastPathComponent)
-                .map {
-                    let option = UserDefaults.group.copyOption
-                    switch option {
-                    case .origin:
-                        return $0
-                    case .escape:
-                        return $0.replacingOccurrences(of: " ", with: #"\ "#)
-                    case .quoto:
-                        return "\"\($0)\""
-                    }
-                }
-                .joined(separator: UserDefaults.group.copySeparator)
-            let success = board.setString(string, forType: .string)
-            return ActionMenuResult(success: success, message: "Pasteboard setString to \(string)")
-        },
-        { urls in
-            let subResults = urls.map { url in
-                let success = NSWorkspace.shared.selectFile(url.deletingLastPathComponent().path, inFileViewerRootedAtPath: "")
-                return ActionMenuResult(success: success)
+    func menuClick(with fileLocations: [URL]) {
+        Task { @MainActor in
+            let actionResult = performAction(with: fileLocations)
+            if actionResult.success {
+                logger.notice("\(actionResult.description, privacy: .public)")
+            } else {
+                logger.error("\(actionResult.description, privacy: .public)")
             }
-            return ActionMenuResult(success: subResults.allSatisfy(\.success), subResults: subResults)
-        },
-        { urls in
-            let subResults = urls.map { url in
-                let name = UserDefaults.group.newFileName
-                let fileExtension = UserDefaults.group.newFileExtension.rawValue
-                let manager = FileManager.default
-                let target: URL
-                if manager.directoryExists(atPath: url.path) {
-                    target = url
-                        .appendingPathComponent(name)
-                        .appendingPathExtension(fileExtension)
-                } else {
-                    target = url
-                        .deletingLastPathComponent()
-                        .appendingPathComponent(name)
-                        .appendingPathExtension(fileExtension)
-                }
-                logger.notice("Trying to create empty file at \(target.path, privacy: .public)")
-                let success = FileManager.default.createFile(atPath: target.path, contents: Data(), attributes: nil)
-                return ActionMenuResult(success: success)
-            }
-            return ActionMenuResult(success: subResults.allSatisfy(\.success), subResults: subResults)
-        },
-    ]
-
-    func menuClick(with urls: [URL]) {
-        let result = ActionMenuItem.actions[actionIndex](urls)
-        if result.success {
-            logger.notice("\(result.description, privacy: .public)")
-        } else {
-            logger.error("\(result.description, privacy: .public)")
         }
+    }
+
+    @MainActor
+    private func performAction(with fileLocations: [URL]) -> ActionMenuResult {
+        guard let actionKind = ActionKind(rawValue: actionIndex) else {
+            return ActionMenuResult(
+                message: "Unknown action index: \(actionIndex)"
+            )
+        }
+
+        switch actionKind {
+        case .copyPath:
+            return copyToPasteboard(fileLocations.map(\.path))
+        case .copyFileName:
+            return copyToPasteboard(fileLocations.map(\.lastPathComponent))
+        case .goToParentDirectory:
+            let individualResults = fileLocations.map { fileLocation in
+                let selectionSucceeded = NSWorkspace.shared.selectFile(
+                    fileLocation.deletingLastPathComponent().path,
+                    inFileViewerRootedAtPath: ""
+                )
+                return ActionMenuResult(success: selectionSucceeded)
+            }
+            return ActionMenuResult(
+                success: individualResults.allSatisfy(\.success),
+                individualResults: individualResults
+            )
+        case .createFile:
+            let individualResults = fileLocations.map(createFile)
+            return ActionMenuResult(
+                success: individualResults.allSatisfy(\.success),
+                individualResults: individualResults
+            )
+        }
+    }
+
+    @MainActor
+    private func copyToPasteboard(_ pathComponents: [String]) -> ActionMenuResult {
+        let copyOption = UserDefaults.group.copyOption
+        let pasteboardString = pathComponents
+            .map { pathComponent in
+                switch copyOption {
+                case .origin:
+                    return pathComponent
+                case .escape:
+                    return pathComponent.replacingOccurrences(of: " ", with: #"\ "#)
+                case .quoto:
+                    return "\"\(pathComponent)\""
+                }
+            }
+            .joined(separator: UserDefaults.group.copySeparator)
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let writeSucceeded = pasteboard.setString(pasteboardString, forType: .string)
+        return ActionMenuResult(
+            success: writeSucceeded,
+            message: "Pasteboard setString to \(pasteboardString)"
+        )
+    }
+
+    @MainActor
+    private func createFile(at fileLocation: URL) -> ActionMenuResult {
+        let fileName = UserDefaults.group.newFileName
+        let fileNameExtension = UserDefaults.group.newFileExtension.rawValue
+        let fileManager = FileManager.default
+        let targetLocation: URL
+        if fileManager.directoryExists(atPath: fileLocation.path) {
+            targetLocation = fileLocation
+                .appendingPathComponent(fileName)
+                .appendingPathExtension(fileNameExtension)
+        } else {
+            targetLocation = fileLocation
+                .deletingLastPathComponent()
+                .appendingPathComponent(fileName)
+                .appendingPathExtension(fileNameExtension)
+        }
+        logger.notice("Trying to create empty file at \(targetLocation.path, privacy: .public)")
+        let creationSucceeded = fileManager.createFile(
+            atPath: targetLocation.path,
+            contents: Data(),
+            attributes: nil
+        )
+        return ActionMenuResult(success: creationSucceeded)
     }
 }
 
-struct ActionMenuResult: CustomStringConvertible {
+struct ActionMenuResult: CustomStringConvertible, Sendable {
     var success = false
     var message: String?
-    var subResults: [ActionMenuResult]?
+    var individualResults: [ActionMenuResult]?
 
     var description: String {
-        var result = "ActionMenuResult:\n"
-        result.append("success: \(success ? "✅" : "❌") \n")
+        var descriptionText = "ActionMenuResult:\n"
+        descriptionText.append("success: \(success ? "✅" : "❌") \n")
         if let message {
-            result.append("message: \(message)\n")
+            descriptionText.append("message: \(message)\n")
         }
-        if let subResults {
-            result.append("subResults:\n")
-            subResults.forEach { result.append($0.description) }
-            result.append("\n")
+        if let individualResults {
+            descriptionText.append("individualResults:\n")
+            individualResults.forEach { individualResult in
+                descriptionText.append(individualResult.description)
+            }
+            descriptionText.append("\n")
         }
-        return result
+        return descriptionText
     }
 }
 
@@ -179,8 +214,8 @@ extension FileManager {
     }
 
     private func fileExists(atPath path: String, isDirectory: Bool) -> Bool {
-        var isDirectoryBool = ObjCBool(isDirectory)
-        let exists = fileExists(atPath: path, isDirectory: &isDirectoryBool)
-        return exists && (isDirectoryBool.boolValue == isDirectory)
+        var directoryFlag = ObjCBool(isDirectory)
+        let fileExists = fileExists(atPath: path, isDirectory: &directoryFlag)
+        return fileExists && (directoryFlag.boolValue == isDirectory)
     }
 }

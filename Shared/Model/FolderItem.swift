@@ -7,10 +7,10 @@
 
 import Foundation
 
-protocol FolderItem: Hashable, Identifiable, Codable {
+nonisolated protocol FolderItem: Hashable, Identifiable, Codable, Sendable {
     var path: String { get }
 }
 
 extension FolderItem {
-    var id: String { path }
+    nonisolated var id: String { path }
 }

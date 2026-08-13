@@ -10,15 +10,50 @@ import Darwin
 import FinderSync
 import os.log
 
-let menuStore = MenuItemStore()
-let folderStore = FolderItemStore()
-let channel = FinderCommChannel()
+@MainActor let menuStore = MenuItemStore()
+@MainActor let folderStore = FolderItemStore()
+@MainActor let channel = FinderCommChannel()
+let finderMenuSnapshot = FinderMenuSnapshot()
 private let logger = Logger(subsystem: subsystem, category: "menu")
 
-class FinderSync: FIFinderSync {
-    private var cachedMenus: [UInt: NSMenu] = [:]
-    private var cachedStateHash: Int = 0
+final class FinderMenuSnapshot: @unchecked Sendable {
+    private let accessLock = NSLock()
+    private var applicationMenuItems: [AppMenuItem] = []
+    private var actionMenuItems: [ActionMenuItem] = []
 
+    func replace(
+        applicationMenuItems: [AppMenuItem],
+        actionMenuItems: [ActionMenuItem]
+    ) {
+        accessLock.lock()
+        defer { accessLock.unlock() }
+        self.applicationMenuItems = applicationMenuItems
+        self.actionMenuItems = actionMenuItems
+    }
+
+    func currentItems() -> (
+        applicationMenuItems: [AppMenuItem],
+        actionMenuItems: [ActionMenuItem]
+    ) {
+        accessLock.lock()
+        defer { accessLock.unlock() }
+        return (applicationMenuItems, actionMenuItems)
+    }
+
+    func applicationMenuItem(named menuTitle: String) -> AppMenuItem? {
+        accessLock.lock()
+        defer { accessLock.unlock() }
+        return applicationMenuItems.first { menuTitle.contains($0.name) }
+    }
+
+    func actionMenuItem(named menuTitle: String) -> ActionMenuItem? {
+        accessLock.lock()
+        defer { accessLock.unlock() }
+        return actionMenuItems.first { $0.name == menuTitle }
+    }
+}
+
+class FinderSync: FIFinderSync {
     override init() {
         super.init()
         Task { @MainActor in
@@ -27,14 +62,17 @@ class FinderSync: FIFinderSync {
             FIFinderSyncController.default().directoryURLs = Set(folderStore.syncItems.map { URL(fileURLWithPath: $0.path) })
             logger.notice("Init sync directory is \(folderStore.syncItems.map(\.path).joined(separator: "\n"), privacy: .public)")
 
-            // Prewarm icon cache (sync disk reads, only misses go async)
-            AppIconCache.shared.prewarm(urls: menuStore.appItems.map(\.url))
+            finderMenuSnapshot.replace(
+                applicationMenuItems: menuStore.appItems,
+                actionMenuItems: menuStore.actionItems
+            )
+            AppIconCache.shared.prewarm(applicationLocations: menuStore.appItems.map(\.url))
 
             // Monitor volumes
             NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { notification in
-                if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
+                if let volumeLocation = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
                     Task { @MainActor in
-                        folderStore.appendItem(SyncFolderItem(volumeURL))
+                        folderStore.appendItem(SyncFolderItem(volumeLocation))
                     }
                 }
             }
@@ -74,37 +112,20 @@ class FinderSync: FIFinderSync {
             break
         }
 
-        // Invalidate cache when items or settings change
-        let stateHash = menuStateHash
-        if stateHash != cachedStateHash {
-            cachedMenus.removeAll()
-            cachedStateHash = stateHash
-        }
-
-        // Return cached menu if available
-        if let cached = cachedMenus[menuKind.rawValue] {
-            return cached
-        }
-
-        // Build and cache
         logger.notice("Create menu for \(menuKind.rawValue)")
-        let menu = buildMenu(for: menuKind)
-        cachedMenus[menuKind.rawValue] = menu
-        return menu
+        let currentItems = finderMenuSnapshot.currentItems()
+        return buildMenu(
+            for: menuKind,
+            applicationMenuItems: currentItems.applicationMenuItems,
+            actionMenuItems: currentItems.actionMenuItems
+        )
     }
 
-    private var menuStateHash: Int {
-        var hasher = Hasher()
-        hasher.combine(menuStore.appItems)
-        hasher.combine(menuStore.actionItems)
-        hasher.combine(UserDefaults.group.showSubMenuForApplication)
-        hasher.combine(UserDefaults.group.showSubMenuForAction)
-        hasher.combine(UserDefaults.group.showIconForApplication)
-        hasher.combine(UserDefaults.group.showIconForAction)
-        return hasher.finalize()
-    }
-
-    private func buildMenu(for menuKind: FIMenuKind) -> NSMenu {
+    private func buildMenu(
+        for menuKind: FIMenuKind,
+        applicationMenuItems: [AppMenuItem],
+        actionMenuItems: [ActionMenuItem]
+    ) -> NSMenu {
         let menu = NSMenu(title: "MenuHelper")
         menu.showsStateColumn = true
 
@@ -117,7 +138,7 @@ class FinderSync: FIFinderSync {
         } else {
             applicationMenu = menu
         }
-        for item in menuStore.appItems.filter(\.enabled) {
+        for item in applicationMenuItems.filter(\.enabled) {
             let menuItem = NSMenuItem()
             menuItem.target = self
             menuItem.title = String(format: String(localized: "Open in %@", comment: "Open in the given application"), item.name)
@@ -125,7 +146,7 @@ class FinderSync: FIFinderSync {
             menuItem.toolTip = "\(item.name)"
             menuItem.tag = 0
             if menuKind == .toolbarItemMenu || UserDefaults.group.showIconForApplication {
-                menuItem.image = item.icon
+                menuItem.image = item.menuIcon
             }
             applicationMenu.addItem(menuItem)
         }
@@ -139,7 +160,7 @@ class FinderSync: FIFinderSync {
         } else {
             actionMenu = menu
         }
-        for item in menuStore.actionItems.filter(\.enabled) {
+        for item in actionMenuItems.filter(\.enabled) {
             let menuItem = NSMenuItem()
             menuItem.target = self
             menuItem.title = item.name
@@ -147,7 +168,7 @@ class FinderSync: FIFinderSync {
             menuItem.toolTip = "\(item.name)"
             menuItem.tag = 1
             if menuKind == .toolbarItemMenu || UserDefaults.group.showIconForAction {
-                menuItem.image = item.icon
+                menuItem.image = item.menuIcon
             }
             actionMenu.addItem(menuItem)
         }
@@ -156,18 +177,18 @@ class FinderSync: FIFinderSync {
 
     @objc
     func menuAction(_ menuItem: NSMenuItem) {
-        guard let targetURL = FIFinderSyncController.default().targetedURL(),
-              let itemURLs = FIFinderSyncController.default().selectedItemURLs() else { return }
-        logger.notice("Click menu \"\(menuItem.title, privacy: .public)\", index = \(menuItem.tag, privacy: .public), target = \(targetURL, privacy: .public), items = \(itemURLs, privacy: .public)]")
+        guard let targetLocation = FIFinderSyncController.default().targetedURL(),
+              let selectedItemLocations = FIFinderSyncController.default().selectedItemURLs() else { return }
+        logger.notice("Click menu \"\(menuItem.title, privacy: .public)\", index = \(menuItem.tag, privacy: .public), target = \(targetLocation, privacy: .public), items = \(selectedItemLocations, privacy: .public)]")
 
-        let urls = itemURLs.isEmpty ? [targetURL] : itemURLs
+        let fileLocations = selectedItemLocations.isEmpty ? [targetLocation] : selectedItemLocations
         switch menuItem.tag {
         case 0:
-            let item = menuStore.getAppItem(name: menuItem.title)
-            item?.menuClick(with: urls)
+            let item = finderMenuSnapshot.applicationMenuItem(named: menuItem.title)
+            item?.menuClick(with: fileLocations)
         case 1:
-            let item = menuStore.getActionItem(name: menuItem.title)
-            item?.menuClick(with: urls)
+            let item = finderMenuSnapshot.actionMenuItem(named: menuItem.title)
+            item?.menuClick(with: fileLocations)
         default:
             break
         }

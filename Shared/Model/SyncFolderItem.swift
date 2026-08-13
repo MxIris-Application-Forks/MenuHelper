@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SyncFolderItem: FolderItem {
+nonisolated struct SyncFolderItem: FolderItem {
     var path: String
 
     init(_ url: URL) {
