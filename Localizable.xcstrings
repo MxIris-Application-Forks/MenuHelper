@@ -2,6 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "\n" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -193,6 +194,7 @@
     },
     "Copy File Name" : {
       "comment" : "Copy File Name",
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -204,6 +206,7 @@
     },
     "Copy Path" : {
       "comment" : "Copy Path",
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -385,6 +388,7 @@
     },
     "Go Parent Directory" : {
       "comment" : "Go Parent Directory",
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -476,6 +480,7 @@
     },
     "New File" : {
       "comment" : "New File",
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -516,6 +521,7 @@
       }
     },
     "Open Settings Panel..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
