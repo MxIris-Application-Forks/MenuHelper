@@ -152,6 +152,18 @@
         }
       }
     },
+    "Change Symbolic Link Target" : {
+      "comment" : "Change Symbolic Link Target",
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改符号链接目标"
+          }
+        }
+      }
+    },
     "Clicks on the extension’s toolbar button." : {
       "localizations" : {
         "zh-Hans" : {

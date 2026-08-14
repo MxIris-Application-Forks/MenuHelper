@@ -9,6 +9,10 @@ MenuHelper is a Finder Extension App to improve your efficiency.
 
 It presents a customizable menu to open selected folders or files with the applications you add.
 
+## Built-in Finder Actions
+
+MenuHelper can copy selected paths or file names, reveal parent directories, create files, and change the target of a single selected symbolic link. Changing a symbolic link uses the standard file chooser, shows the old and new target before confirmation, and reports whether the change succeeded.
+
 ![Menu Helper](MenuHelper/Assets.xcassets/AppIcon.appiconset/icon_256x256.png)
 
 ## Structure

@@ -88,11 +88,12 @@ extension ActionMenuItem: MenuItemClickable {
         case copyFileName
         case goToParentDirectory
         case createFile
+        case changeSymbolicLinkTarget
     }
 
     func menuClick(with fileLocations: [URL]) {
         Task { @MainActor in
-            let actionResult = performAction(with: fileLocations)
+            let actionResult = await performAction(with: fileLocations)
             if actionResult.success {
                 logger.notice("\(actionResult.description, privacy: .public)")
             } else {
@@ -102,7 +103,7 @@ extension ActionMenuItem: MenuItemClickable {
     }
 
     @MainActor
-    private func performAction(with fileLocations: [URL]) -> ActionMenuResult {
+    private func performAction(with fileLocations: [URL]) async -> ActionMenuResult {
         guard let actionKind = ActionKind(rawValue: actionIndex) else {
             return ActionMenuResult(
                 message: "Unknown action index: \(actionIndex)"
@@ -132,7 +133,179 @@ extension ActionMenuItem: MenuItemClickable {
                 success: individualResults.allSatisfy(\.success),
                 individualResults: individualResults
             )
+        case .changeSymbolicLinkTarget:
+            return await changeSymbolicLinkTarget(for: fileLocations)
         }
+    }
+
+    @MainActor
+    private func changeSymbolicLinkTarget(for fileLocations: [URL]) async -> ActionMenuResult {
+        guard fileLocations.count == 1,
+              let symbolicLinkLocation = fileLocations.first
+        else {
+            let failureDescription = String(
+                localized: "Select exactly one symbolic link in Finder.",
+                comment: "Failure shown when the symbolic link target action receives an invalid selection"
+            )
+            showSymbolicLinkTargetChangeResult(
+                success: false,
+                informativeText: failureDescription
+            )
+            return ActionMenuResult(message: failureDescription)
+        }
+
+        guard SymbolicLinkTargetChanger.isSymbolicLink(at: symbolicLinkLocation) else {
+            let failureDescription = String(
+                localized: "The selected Finder item is no longer a symbolic link.",
+                comment: "Failure shown when a selected symbolic link changed before the action ran"
+            )
+            showSymbolicLinkTargetChangeResult(
+                success: false,
+                informativeText: failureDescription
+            )
+            return ActionMenuResult(message: failureDescription)
+        }
+
+        do {
+            let oldTargetInformation = try SymbolicLinkTargetChanger.targetInformation(
+                for: symbolicLinkLocation
+            )
+            let newTargetSelectionPanel = NSOpenPanel()
+            newTargetSelectionPanel.allowsMultipleSelection = false
+            newTargetSelectionPanel.canChooseFiles = true
+            newTargetSelectionPanel.canChooseDirectories = true
+            newTargetSelectionPanel.canCreateDirectories = false
+            newTargetSelectionPanel.title = String(
+                localized: "Select New Symbolic Link Target",
+                comment: "Title for choosing a new symbolic link target"
+            )
+            newTargetSelectionPanel.message = String(
+                localized: "Choose the file or folder that the symbolic link should point to.",
+                comment: "Instructions for choosing a new symbolic link target"
+            )
+            newTargetSelectionPanel.prompt = String(
+                localized: "Select",
+                comment: "Button for selecting a new symbolic link target"
+            )
+
+            let fileManager = FileManager.default
+            if fileManager.directoryExists(
+                atPath: oldTargetInformation.displayedDestinationLocation.path
+            ) {
+                newTargetSelectionPanel.directoryURL = oldTargetInformation
+                    .displayedDestinationLocation
+            } else if fileManager.fileExists(
+                atPath: oldTargetInformation.displayedDestinationLocation.path
+            ) {
+                newTargetSelectionPanel.directoryURL = oldTargetInformation
+                    .displayedDestinationLocation
+                    .deletingLastPathComponent()
+            } else {
+                newTargetSelectionPanel.directoryURL = symbolicLinkLocation
+                    .deletingLastPathComponent()
+            }
+
+            let panelResponse = await newTargetSelectionPanel.begin()
+            logger.notice("Symbolic link target NSOpenPanel response \(panelResponse.rawValue)")
+            guard panelResponse == .OK,
+                  let selectedNewTargetLocation = newTargetSelectionPanel.urls.first
+            else {
+                return ActionMenuResult(
+                    success: true,
+                    message: "Symbolic link target selection cancelled"
+                )
+            }
+            defer { selectedNewTargetLocation.stopAccessingSecurityScopedResource() }
+
+            let standardizedNewTargetLocation = selectedNewTargetLocation.standardizedFileURL
+            let confirmationAlert = NSAlert()
+            confirmationAlert.alertStyle = .warning
+            confirmationAlert.messageText = String(
+                localized: "Change Symbolic Link Target?",
+                comment: "Confirmation title before changing a symbolic link target"
+            )
+            confirmationAlert.informativeText = String(
+                format: String(
+                    localized: "Old Location:\n%@\n\nNew Location:\n%@",
+                    comment: "Old and new symbolic link target locations in the confirmation alert"
+                ),
+                oldTargetInformation.displayedDestinationLocation.path,
+                standardizedNewTargetLocation.path
+            )
+            confirmationAlert.addButton(
+                withTitle: String(
+                    localized: "Change",
+                    comment: "Button that confirms changing a symbolic link target"
+                )
+            )
+            confirmationAlert.addButton(
+                withTitle: String(
+                    localized: "Cancel",
+                    comment: "Button that cancels changing a symbolic link target"
+                )
+            )
+            guard confirmationAlert.runModal() == .alertFirstButtonReturn else {
+                return ActionMenuResult(
+                    success: true,
+                    message: "Symbolic link target change cancelled"
+                )
+            }
+
+            try SymbolicLinkTargetChanger.replaceTarget(
+                of: symbolicLinkLocation,
+                with: standardizedNewTargetLocation
+            )
+            let successDescription = String(
+                format: String(
+                    localized: "The symbolic link now points to:\n%@",
+                    comment: "Successful symbolic link target change details"
+                ),
+                standardizedNewTargetLocation.path
+            )
+            showSymbolicLinkTargetChangeResult(
+                success: true,
+                informativeText: successDescription
+            )
+            return ActionMenuResult(
+                success: true,
+                message: "Changed symbolic link target"
+            )
+        } catch {
+            let caughtError = error as NSError
+            let failureDescription = [
+                caughtError.localizedDescription,
+                caughtError.localizedFailureReason,
+            ]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+            showSymbolicLinkTargetChangeResult(
+                success: false,
+                informativeText: failureDescription
+            )
+            return ActionMenuResult(message: failureDescription)
+        }
+    }
+
+    @MainActor
+    private func showSymbolicLinkTargetChangeResult(
+        success: Bool,
+        informativeText: String
+    ) {
+        let resultAlert = NSAlert()
+        resultAlert.alertStyle = success ? .informational : .critical
+        resultAlert.messageText = success
+            ? String(
+                localized: "Change Succeeded",
+                comment: "Title for a successful symbolic link target change"
+            )
+            : String(
+                localized: "Change Failed",
+                comment: "Title for a failed symbolic link target change"
+            )
+        resultAlert.informativeText = informativeText
+        resultAlert.addButton(withTitle: String(localized: "OK", comment: "OK button"))
+        resultAlert.runModal()
     }
 
     @MainActor

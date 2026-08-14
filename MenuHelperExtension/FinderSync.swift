@@ -114,17 +114,28 @@ class FinderSync: FIFinderSync {
 
         logger.notice("Create menu for \(menuKind.rawValue)")
         let currentItems = finderMenuSnapshot.currentItems()
+        let finderSyncController = FIFinderSyncController.default()
+        let selectedItemLocations = finderSyncController.selectedItemURLs() ?? []
+        let currentFileLocations: [URL]
+        if selectedItemLocations.isEmpty,
+           let targetLocation = finderSyncController.targetedURL() {
+            currentFileLocations = [targetLocation]
+        } else {
+            currentFileLocations = selectedItemLocations
+        }
         return buildMenu(
             for: menuKind,
             applicationMenuItems: currentItems.applicationMenuItems,
-            actionMenuItems: currentItems.actionMenuItems
+            actionMenuItems: currentItems.actionMenuItems,
+            currentFileLocations: currentFileLocations
         )
     }
 
     private func buildMenu(
         for menuKind: FIMenuKind,
         applicationMenuItems: [AppMenuItem],
-        actionMenuItems: [ActionMenuItem]
+        actionMenuItems: [ActionMenuItem],
+        currentFileLocations: [URL]
     ) -> NSMenu {
         let menu = NSMenu(title: "MenuHelper")
         menu.showsStateColumn = true
@@ -160,19 +171,37 @@ class FinderSync: FIFinderSync {
         } else {
             actionMenu = menu
         }
-        for item in actionMenuItems.filter(\.enabled) {
+        for actionMenuItem in actionMenuItems.filter(\.enabled) {
+            guard shouldInclude(
+                actionMenuItem,
+                for: currentFileLocations
+            ) else { continue }
+
             let menuItem = NSMenuItem()
             menuItem.target = self
-            menuItem.title = item.name
+            menuItem.title = actionMenuItem.name
             menuItem.action = #selector(menuAction(_:))
-            menuItem.toolTip = "\(item.name)"
+            menuItem.toolTip = "\(actionMenuItem.name)"
             menuItem.tag = 1
             if menuKind == .toolbarItemMenu || UserDefaults.group.showIconForAction {
-                menuItem.image = item.menuIcon
+                menuItem.image = actionMenuItem.menuIcon
             }
             actionMenu.addItem(menuItem)
         }
         return menu
+    }
+
+    private func shouldInclude(
+        _ actionMenuItem: ActionMenuItem,
+        for currentFileLocations: [URL]
+    ) -> Bool {
+        guard actionMenuItem.actionIndex == ActionMenuItem.changeSymbolicLinkTarget.actionIndex else {
+            return true
+        }
+        guard currentFileLocations.count == 1,
+              let symbolicLinkLocation = currentFileLocations.first
+        else { return false }
+        return SymbolicLinkTargetChanger.isSymbolicLink(at: symbolicLinkLocation)
     }
 
     @objc

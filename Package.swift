@@ -13,10 +13,19 @@ let package = Package(
             path: "Shared/Cache",
             sources: ["AppIconCache.swift"]
         ),
+        .target(
+            name: "MenuHelperFileOperations",
+            path: "Shared/FileSystem"
+        ),
         .testTarget(
             name: "MenuHelperIconCacheTests",
             dependencies: ["MenuHelperIconCache"],
             path: "Tests/MenuHelperIconCacheTests"
+        ),
+        .testTarget(
+            name: "MenuHelperFileOperationsTests",
+            dependencies: ["MenuHelperFileOperations"],
+            path: "Tests/MenuHelperFileOperationsTests"
         ),
     ],
     swiftLanguageModes: [.v5]

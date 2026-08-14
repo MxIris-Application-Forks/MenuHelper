@@ -61,6 +61,7 @@
 		AE94CFBD27EA1F4900A5B87D /* AppMenuItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE94CFBC27EA1F4900A5B87D /* AppMenuItemView.swift */; };
 		CA1C000300000000000A0003 /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C000100000000000A0001 /* AppIconCache.swift */; };
 		CA1C000400000000000A0004 /* AppIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C000100000000000A0001 /* AppIconCache.swift */; };
+		CB979EE6F308D7DD3E1BC330 /* SymbolicLinkTargetChanger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEA583CDDEA2D1B29596A09 /* SymbolicLinkTargetChanger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,6 +142,7 @@
 		27F15ED1271293A00042944A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		27F15ED3271298650042944A /* FolderItemStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItemStore.swift; sourceTree = "<group>"; };
 		27F15ED7271299580042944A /* BookmarkFolderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkFolderItem.swift; sourceTree = "<group>"; };
+		5FEA583CDDEA2D1B29596A09 /* SymbolicLinkTargetChanger.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; lastKnownFileType = sourcecode.swift; name = SymbolicLinkTargetChanger.swift; path = SymbolicLinkTargetChanger.swift; sourceTree = "<group>"; };
 		AE92166627B4EA1800471742 /* AcknowledgementsWindow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AcknowledgementsWindow.swift; sourceTree = "<group>"; };
 		AE94CFBA27EA06C300A5B87D /* AppMenuItemEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMenuItemEditor.swift; sourceTree = "<group>"; };
 		AE94CFBC27EA1F4900A5B87D /* AppMenuItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMenuItemView.swift; sourceTree = "<group>"; };
@@ -177,6 +179,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		175771A6B2367BA988EB84C2 /* FileSystem */ = {
+			isa = PBXGroup;
+			children = (
+				5FEA583CDDEA2D1B29596A09 /* SymbolicLinkTargetChanger.swift */,
+			);
+			name = FileSystem;
+			path = FileSystem;
+			sourceTree = "<group>";
+		};
 		2732A5B027B9558D005DB4A0 /* MenuHelperUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,6 +216,7 @@
 				27421A93271FCABF00A0BD28 /* Channel */,
 				27952047268B6A1200492ABF /* ViewModel */,
 				27952046268B6A0C00492ABF /* Model */,
+				175771A6B2367BA988EB84C2 /* FileSystem */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -573,6 +585,7 @@
 				279C37652711912F00436979 /* FinderSync+UserDefaults.swift in Sources */,
 				27421A9D271FF10400A0BD28 /* StringExtension.swift in Sources */,
 				27421A9A271FCB1A00A0BD28 /* FinderCommChannel.swift in Sources */,
+				CB979EE6F308D7DD3E1BC330 /* SymbolicLinkTargetChanger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

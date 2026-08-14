@@ -21,6 +21,84 @@
         }
       }
     },
+    "Cancel" : {
+      "comment" : "Button that cancels changing a symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Change" : {
+      "comment" : "Button that confirms changing a symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改"
+          }
+        }
+      }
+    },
+    "Change Failed" : {
+      "comment" : "Title for a failed symbolic link target change",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改失败"
+          }
+        }
+      }
+    },
+    "Change Succeeded" : {
+      "comment" : "Title for a successful symbolic link target change",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改成功"
+          }
+        }
+      }
+    },
+    "Change Symbolic Link Target" : {
+      "comment" : "Change Symbolic Link Target",
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改符号链接目标"
+          }
+        }
+      }
+    },
+    "Change Symbolic Link Target?" : {
+      "comment" : "Confirmation title before changing a symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要更改符号链接目标吗？"
+          }
+        }
+      }
+    },
+    "Choose the file or folder that the symbolic link should point to." : {
+      "comment" : "Instructions for choosing a new symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择符号链接应指向的文件或文件夹。"
+          }
+        }
+      }
+    },
     "Copy File Name" : {
       "comment" : "Copy File Name",
       "extractionState" : "stale",
@@ -51,6 +129,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用\"\\ \"转义\" \""
+          }
+        }
+      }
+    },
+    "Expected: %@\nActual: %@" : {
+      "comment" : "Expected and actual symbolic link destinations after a target change",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预期：%@\n实际：%@"
           }
         }
       }
@@ -110,6 +199,17 @@
         }
       }
     },
+    "Old Location:\n%@\n\nNew Location:\n%@" : {
+      "comment" : "Old and new symbolic link target locations in the confirmation alert",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "旧位置：\n%@\n\n新位置：\n%@"
+          }
+        }
+      }
+    },
     "Open in %@" : {
       "comment" : "Open in the given application",
       "localizations" : {
@@ -128,6 +228,83 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除"
+          }
+        }
+      }
+    },
+    "Select" : {
+      "comment" : "Button for selecting a new symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择"
+          }
+        }
+      }
+    },
+    "Select exactly one symbolic link in Finder." : {
+      "comment" : "Failure shown when the symbolic link target action receives an invalid selection",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在“访达”中只选择一个符号链接。"
+          }
+        }
+      }
+    },
+    "Select New Symbolic Link Target" : {
+      "comment" : "Title for choosing a new symbolic link target",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择新的符号链接目标"
+          }
+        }
+      }
+    },
+    "The selected Finder item is no longer a symbolic link." : {
+      "comment" : "Failure shown when a selected symbolic link changed before the action ran",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选“访达”项目已不再是符号链接。"
+          }
+        }
+      }
+    },
+    "The selected new location no longer exists." : {
+      "comment" : "Symbolic link target change failure when the selected destination disappeared",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选新位置已不存在。"
+          }
+        }
+      }
+    },
+    "The symbolic link now points to:\n%@" : {
+      "comment" : "Successful symbolic link target change details",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符号链接现在指向：\n%@"
+          }
+        }
+      }
+    },
+    "The symbolic link target could not be verified." : {
+      "comment" : "Symbolic link target change verification failure",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法验证符号链接目标。"
           }
         }
       }

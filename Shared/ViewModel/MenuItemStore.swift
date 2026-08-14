@@ -137,7 +137,21 @@ final class MenuItemStore {
            let actionItemsData = UserDefaults.group.data(forKey: "ACTION_ITEMS") {
             let decoder = PropertyListDecoder()
             appItems = try decoder.decode([AppMenuItem].self, from: appItemsData)
-            actionItems = try decoder.decode([ActionMenuItem].self, from: actionItemsData)
+            let storedActionItems = try decoder.decode(
+                [ActionMenuItem].self,
+                from: actionItemsData
+            )
+            let missingActionItems = ActionMenuItem.all.filter { defaultActionItem in
+                !storedActionItems.contains { storedActionItem in
+                    storedActionItem.key == defaultActionItem.key
+                }
+            }
+            actionItems = storedActionItems + missingActionItems
+            if !missingActionItems.isEmpty {
+                let encoder = PropertyListEncoder()
+                let migratedActionItemsData = try encoder.encode(OrderedSet(actionItems))
+                UserDefaults.group.set(migratedActionItemsData, forKey: "ACTION_ITEMS")
+            }
         } else {
             appItems = AppMenuItem.defaultApps
             actionItems = ActionMenuItem.all

@@ -27,12 +27,22 @@ nonisolated struct ActionMenuItem: MenuItem {
 }
 
 extension ActionMenuItem {
-    static let all: [ActionMenuItem] = [.copyPath, copyFileName, .goParent, .newFile]
+    static let all: [ActionMenuItem] = [
+        .copyPath,
+        copyFileName,
+        .goParent,
+        .newFile,
+        .changeSymbolicLinkTarget,
+    ]
 
     static let copyPath = ActionMenuItem(key: "Copy Path", actionIndex: 0)
     static let copyFileName = ActionMenuItem(key: "Copy File Name", actionIndex: 1)
     static let goParent = ActionMenuItem(key: "Go Parent Directory", actionIndex: 2)
     static let newFile = ActionMenuItem(key: "New File", actionIndex: 3)
+    static let changeSymbolicLinkTarget = ActionMenuItem(
+        key: "Change Symbolic Link Target",
+        actionIndex: 4
+    )
 
     // MARK: - Making the compiler to extract Localized key
 
@@ -42,5 +52,9 @@ extension ActionMenuItem {
     private static let copyFileNameString = NSLocalizedString("Copy File Name", comment: "Copy File Name")
     private static let goParentString = NSLocalizedString("Go Parent Directory", comment: "Go Parent Directory")
     private static let newFileString = NSLocalizedString("New File", comment: "New File")
+    private static let changeSymbolicLinkTargetString = NSLocalizedString(
+        "Change Symbolic Link Target",
+        comment: "Change Symbolic Link Target"
+    )
     #endif
 }
